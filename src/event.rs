@@ -1,9 +1,10 @@
+use std::borrow::Cow;
 use chrono::Local;
 use log::{debug, error, info, warn};
 use serenity::async_trait;
 use serenity::client::{Context, EventHandler};
 use serenity::constants::MESSAGE_CODE_LIMIT;
-use serenity::model::channel::Message;
+use serenity::model::channel::{AttachmentType, Message};
 use serenity::model::gateway::Ready;
 use crate::Args;
 use crate::permalink::AsPermalink;
@@ -37,15 +38,15 @@ impl EventHandler for Syncer {
         info!("sync started. permalink: {permalink}", permalink = incoming_message.as_permalink(&ctx).unwrap());
         let iso_date = Local::now().to_rfc3339();
         let original_content = incoming_message.content;
-        let mut new_message = format!(r#"----------
-Subject: このメッセージは <#{channel_id}> から転送されたメッセージです。
-Date: {iso_date}
-Age: 0
-Content-Type: text/markdown
-
-----------
-{original_content}
-"#);
+        const BOUNDARY: &str = "----------";
+        let metadata_json = format!(r#"{{
+    "subject": "このメッセージは <#{channel_id}> から転送されたメッセージです。",
+    "date": "{iso_date}",
+    "age": 0,
+    "content-type": "text/markdown+discord",
+    "channel_ref": "{channel_id}"
+}}"#);
+        let mut new_message = original_content;
         const TOO_LONG: &str = "長すぎるため省略されました。";
         let new_message = if new_message.len() > MESSAGE_CODE_LIMIT {
             let maximum_unicode_codepoint_length = MESSAGE_CODE_LIMIT - TOO_LONG.chars().count() - 1;
@@ -68,6 +69,10 @@ Content-Type: text/markdown
                         // do not interpret mention
                         m.empty_parse()
                     )
+                    .add_file(AttachmentType::Bytes {
+                        data: Cow::from(metadata_json.as_bytes()),
+                        filename: "metadata.json".to_string()
+                    })
             ).await;
 
             match deliver_result {
