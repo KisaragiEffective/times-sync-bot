@@ -27,11 +27,11 @@ fn initialize_fern() -> Result<(), fern::InitError> {
         })
         .level(log::LevelFilter::Info)
         // skip log record from noisy serenity shard runner
-        .filter(|x| x.target() != "tracing::span" && x.level() != Level::Info)
+        .filter(|x| !(x.target() == "tracing::span" && x.level() == Level::Info))
         // body is noisy and unnecessary
-        .filter(|x| x.target() != "serenity::http::request" && x.level() != Level::Info)
-        .filter(|x| x.target() != "serenity::http::ratelimiting" && x.level() != Level::Info)
-        .filter(|x| x.target() != "serenity::http::client" && x.level() != Level::Info)
+        .filter(|x| !(x.target() == "serenity::http::request" && x.level() == Level::Info))
+        .filter(|x| !(x.target() == "serenity::http::ratelimiting" && x.level() == Level::Info))
+        .filter(|x| !(x.target() == "serenity::http::client" && x.level() == Level::Info))
         .chain(std::io::stdout())
         .chain(fern::log_file("output.log")?)
         .apply()?;
