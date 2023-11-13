@@ -9,6 +9,6 @@ edition = "2021"
 chrono = "0.4.24"
 clap = { version = "4.4.8", features = ["derive"] }
 fern = { version = "0.6.2", features = ["colored"] }
-log = "0.4.17"
+log = "0.4.20"
 serenity = { version = "0.11.5", default-features = false, features = ["cache", "gateway", "rustls_backend", "http", "builder", "client", "model"] }
 tokio = { version = "1.26.0", features = ["rt-multi-thread", "macros"] }
