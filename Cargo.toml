@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 chrono = "0.4.31"
-clap = { version = "4.4.9", features = ["derive"] }
+clap = { version = "4.4.11", features = ["derive"] }
 fern = { version = "0.6.2", features = ["colored"] }
 log = "0.4.20"
 serenity = { version = "0.11.7", default-features = false, features = ["cache", "gateway", "rustls_backend", "http", "builder", "client", "model"] }
