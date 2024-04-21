@@ -2,6 +2,7 @@ use std::borrow::Cow;
 use chrono::Local;
 use log::{debug, error, info, warn};
 use serenity::async_trait;
+use serenity::builder::{CreateAllowedMentions, CreateAttachment, CreateMessage};
 use serenity::client::{Context, EventHandler};
 use serenity::constants::MESSAGE_CODE_LIMIT;
 use serenity::model::channel::{AttachmentType, Message};
@@ -35,7 +36,7 @@ impl EventHandler for Syncer {
             return
         }
 
-        info!("sync started. permalink: {permalink}", permalink = incoming_message.as_permalink(&ctx).unwrap());
+        info!("sync started. permalink: {permalink}", permalink = incoming_message.as_permalink(&ctx.cache).unwrap());
         let iso_date = Local::now().to_rfc3339();
         let original_content = incoming_message.content;
         const BOUNDARY: &str = "----------";
@@ -62,24 +63,17 @@ impl EventHandler for Syncer {
                 channel_name = channel_id.name(&ctx).await.unwrap_or("<<unknown channel name>>".to_string()),
             );
 
-            let deliver_result = channel_id.send_message(&ctx, |b|
-                b
+            let deliver_result = channel_id.send_message(&ctx, CreateMessage::new()
                     .content(new_message.as_str())
-                    .allowed_mentions(|m|
-                        // do not interpret mention
-                        m.empty_parse()
-                    )
-                    .add_file(AttachmentType::Bytes {
-                        data: Cow::from(metadata_json.as_bytes()),
-                        filename: "metadata.json".to_string()
-                    })
+                    .allowed_mentions(CreateAllowedMentions::new().empty_users().empty_roles())
+                    .add_file(CreateAttachment::bytes(metadata_json.as_bytes(), "metadata.json"))
             ).await;
 
             match deliver_result {
                 Ok(mut m) => {
                     let g = ctx.cache.message(m.channel_id, m.id).and_then(|m| m.guild_id);
                     m.guild_id = g;
-                    if let Ok(permalink) = m.as_permalink(&ctx) {
+                    if let Ok(permalink) = m.as_permalink(&ctx.cache) {
                         info!("success: delivered as {permalink}");
                     } else {
                         info!("success: delivered (could not build permalink)");
