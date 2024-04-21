@@ -5,14 +5,14 @@ pub trait AsPermalink {
     type Permalink;
     type Err;
 
-    fn as_permalink(&self, cache: impl AsRef<Cache>) -> Result<Self::Permalink, Self::Err>;
+    fn as_permalink(&self, cache: &'_ Cache) -> Result<Self::Permalink, Self::Err>;
 }
 
 impl AsPermalink for Message {
     type Permalink = String;
     type Err = ();
 
-    fn as_permalink(&self, cache: impl AsRef<Cache>) -> Result<Self::Permalink, Self::Err> {
+    fn as_permalink(&self, cache: &'_ Cache) -> Result<Self::Permalink, Self::Err> {
         if let Some(guild) = self.guild(cache) {
             Ok(format!(
                 "https://discord.com/channels/{guild_id}/{channel_id}/{message_id}",
